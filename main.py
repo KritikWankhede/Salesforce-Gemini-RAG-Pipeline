@@ -1,15 +1,14 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-import os
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 from langchain_chroma import Chroma
-from langchain_classic.chains import create_retrieval_chain
-from langchain_classic.chains.combine_documents import create_stuff_documents_chain
+from langchain.chains import create_retrieval_chain
+from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
 
 app = FastAPI()
 
-# Load Gemini and ChromaDB (ensure your DB folder is uploaded or connected)
+# Load Gemini and ChromaDB
 embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
 vector_store = Chroma(persist_directory="./chroma_db", embedding_function=embeddings)
 retriever = vector_store.as_retriever(search_kwargs={"k": 2})
