@@ -6,6 +6,7 @@ langchain-core
 langchain-google-genai
 langchain-chroma
 langchain-classic
+langchain-community
 pypdf
 chromadb
 simple-salesforce
