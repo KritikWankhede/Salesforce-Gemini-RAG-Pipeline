@@ -13,7 +13,6 @@ app = FastAPI()
 
 embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
 
-# 1. Base seed cases
 documents = [
     Document(
         page_content="User cannot log in after password reset. Resolution: Clear browser cache and ensure cookies are enabled.",
@@ -25,7 +24,7 @@ documents = [
     )
 ]
 
-# 2. Automatically load any PDFs found in the 'data/' folder
+# Automatically load any PDFs found in the 'data/' folder
 if os.path.exists("data"):
     pdf_loader = PyPDFDirectoryLoader("data")
     pdf_docs = pdf_loader.load()
