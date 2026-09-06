@@ -2,17 +2,15 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 from langchain_chroma import Chroma
-from langchain.chains import create_retrieval_chain
-from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain_classic.chains import create_retrieval_chain
+from langchain_classic.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.documents import Document
 
 app = FastAPI()
 
-# 1. Initialize Gemini and an in-memory/ephemeral Chroma database with seed data
 embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
 
-# We seed initial historical cases directly in code so Render never depends on a missing folder
 seed_documents = [
     Document(
         page_content="User cannot log in after password reset. Resolution: Clear browser cache and ensure cookies are enabled.",
@@ -24,7 +22,6 @@ seed_documents = [
     )
 ]
 
-# Create vector store in memory or transient storage
 vector_store = Chroma.from_documents(seed_documents, embeddings)
 retriever = vector_store.as_retriever(search_kwargs={"k": 2})
 llm = ChatGoogleGenerativeAI(model="gemini-3.5-flash", temperature=0.2)
