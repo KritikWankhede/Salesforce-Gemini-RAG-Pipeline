@@ -61,3 +61,15 @@ def resolve_case(case: CaseQuery):
         "suggested_resolution": response["answer"],
         "sources": sources
     }
+
+# --- FEEDBACK ENDPOINT ---
+class FeedbackPayload(BaseModel):
+    case_id: str
+    rating: str
+    suggestion: str
+
+@app.post("/api/feedback")
+def receive_feedback(feedback: FeedbackPayload):
+    print(f"Feedback received for Case {feedback.case_id}: {feedback.rating}")
+    print(f"Suggestion was: {feedback.suggestion}")
+    return {"status": "success", "message": "Feedback recorded successfully!"}
