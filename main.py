@@ -1,4 +1,3 @@
-from fastapi import FastAPI
 from pydantic import BaseModel
 import os
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
@@ -8,9 +7,26 @@ from langchain_classic.chains.combine_documents import create_stuff_documents_ch
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.documents import Document
 from langchain_community.document_loaders import PyPDFDirectoryLoader
+from fastapi import FastAPI, Depends, HTTPException, status, Security
+from fastapi.security.api_key import APIKeyHeader
 
 app = FastAPI()
 
+# 1. Defined the API Key security scheme
+API_KEY_NAME = "X-API-Key"
+# It will pull from Render's environment variables, with a fallback for local testing
+SECRET_API_KEY = os.environ.get("API_KEY", "your-local-dev-key") 
+api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=True)
+
+# 2. Created the dependency function
+async def get_api_key(api_key: str = Security(api_key_header)):
+    if api_key == SECRET_API_KEY:
+        return api_key
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN, 
+        detail="Invalid or missing API Key"
+    )
+    
 embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
 
 documents = [
@@ -39,7 +55,7 @@ class CaseQuery(BaseModel):
     subject: str
     description: str
 
-@app.post("/api/resolve-case")
+@app.post("/api/resolve-case", dependencies=[Depends(get_api_key)])
 def resolve_case(case: CaseQuery):
     prompt = ChatPromptTemplate.from_messages([
         ("system", "You are a Salesforce assistant. Use the provided context below to suggest a resolution.\n\nContext:\n{context}"),
@@ -68,7 +84,7 @@ class FeedbackPayload(BaseModel):
     rating: str
     suggestion: str
 
-@app.post("/api/feedback")
+@app.post("/api/feedback", dependencies=[Depends(get_api_key)])
 def receive_feedback(feedback: FeedbackPayload):
     print(f"Feedback received for Case {feedback.case_id}: {feedback.rating}")
     print(f"Suggestion was: {feedback.suggestion}")
@@ -80,10 +96,10 @@ class NewCasePayload(BaseModel):
     title: str
     resolution: str
 
-@app.post("/api/add-case")
+@app.post("/api/add-case", dependencies=[Depends(get_api_key)])
 def add_case_to_kb(new_case: NewCasePayload):
     try:
-        # Add the newly resolved case into the running vector store
+        # Added the newly resolved case into the running vector store
         vector_store.add_texts(
             texts=[new_case.resolution],
             metadatas=[{"title": new_case.title, "record_id": new_case.record_id}]
