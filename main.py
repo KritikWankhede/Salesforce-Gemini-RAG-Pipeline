@@ -73,3 +73,21 @@ def receive_feedback(feedback: FeedbackPayload):
     print(f"Feedback received for Case {feedback.case_id}: {feedback.rating}")
     print(f"Suggestion was: {feedback.suggestion}")
     return {"status": "success", "message": "Feedback recorded successfully!"}
+
+#New Case Sync Payload
+class NewCasePayload(BaseModel):
+    record_id: str
+    title: str
+    resolution: str
+
+@app.post("/api/add-case")
+def add_case_to_kb(new_case: NewCasePayload):
+    try:
+        # Add the newly resolved case into the running vector store
+        vector_store.add_texts(
+            texts=[new_case.resolution],
+            metadatas=[{"title": new_case.title, "record_id": new_case.record_id}]
+        )
+        return {"status": "success", "message": f"Case {new_case.record_id} added to knowledge base."}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
